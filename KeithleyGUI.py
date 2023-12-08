@@ -131,7 +131,7 @@ def enableToggle(event):
 
 
 fig = plt.figure(figsize=(4,2))
-fig.canvas.set_window_title('Keithley 2220-30-1 Control')
+fig.canvas.manager.set_window_title('Keithley 22x0-30-1 Control')
         
 axboxCH1V = plt.axes([0.2, 0.23, 0.38, 0.1])
 text_boxCH1V = TextBox(axboxCH1V, 'Voltage', initial=initialSettings[0][0])
