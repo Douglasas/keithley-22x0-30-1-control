@@ -5,3 +5,5 @@ load*
 flymd.*
 *.dat
 *.scpi
+*.desktop
+venv/

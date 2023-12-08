@@ -1,5 +1,11 @@
 # Keithley 2220-30-1 DC Power Supply Control
 
+## *CUSTOMIZED
+
+> Added configuration of virtual environment
+
+> Added installation of GUI program with desktop file (using Icon from [flaticon](https://www.flaticon.com/))
+
 ## Description
 
 Script for controlling a Keithley 2220-30-1 DC power supply via SCPI commands sent via USB:
@@ -18,7 +24,7 @@ Install the python-usbtmc package:
 
 You will likely need to edit **/etc/udev/rules.d/99-garmin.rules** as root, adding this line:
 
-    UBSYSTEM=="usb", ATTR{idVendor}=="VVVV", ATTR{idProduct}=="PPPP", MODE="666"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="VVVV", ATTR{idProduct}=="PPPP", MODE="666"
 
 where *VVVV* and *PPPP* are the vendor and product id, and can be found by running
 
