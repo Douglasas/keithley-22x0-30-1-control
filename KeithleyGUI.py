@@ -27,6 +27,9 @@ except usbtmc.usbtmc.UsbtmcException:
 #querty device's identity
 print(inst.ask("*IDN?"))
 
+NUM_CHANNELS = int(args.usb[1][2])
+print(NUM_CHANNELS, "channels")
+
 #start remote control
 inst.write("SYSTEM:REMOTE")   
 
@@ -36,7 +39,7 @@ def getSettings():
     vSetting = []
     cSetting=[]
     
-    for i in range(0,2):
+    for i in range(0,NUM_CHANNELS):
         inst.write("INST:SEL CH"+str(i+1))
         vSetting.append(inst.ask("VOLT?"))   #voltage setting
         cSetting.append(inst.ask("CURR?"))   #current setting
@@ -49,8 +52,8 @@ def getMeasurements():
     voltStatus =    inst.ask("MEAS:VOLT:DC? ALL")     #voltage on all channels
     currentStatus = inst.ask("MEAS:CURRENT:DC? ALL")  #current on all channels
     
-    v = voltStatus.split(",")
-    c = currentStatus.split(",")
+    v = [float(x) for x in voltStatus.split(",")]
+    c = [float(x) for x in currentStatus.split(",")]
     measuring=False
     
     return v,c
@@ -79,42 +82,26 @@ initialSettings = getSettings()
 def updateMeasurements(event=0):
     inst.write("*OPC")
     measurements = getMeasurements()
-    V1.set_text(measurements[0][0].ljust(5, '0')+"\n"+measurements[1][0].ljust(5, '0'))
-    V2.set_text(measurements[0][1].ljust(5, '0')+"\n"+measurements[1][1].ljust(5, '0'))
+    V1.set_text(f"{measurements[0][0]:.4f}\n{measurements[1][0]:.4f}")
+    V2.set_text(f"{measurements[0][1]:.4f}\n{measurements[1][1]:.4f}")
+    V3.set_text(f"{measurements[0][2]:.4f}\n{measurements[1][2]:.4f}")
 
     plt.draw()
 
 
-def submitChannel1V(text):
+def submitChannelV(text, channel: int):
     if checkV(text):
-        #inst.write("OUTPut 1")
-        inst.write("INST:NSEL 1")
-        inst.write("VOLT "+text)
-        updateMeasurements()
-        
-
-def submitChannel2V(text):
-    if checkV(text):
-        #inst.write("OUTPut 1")
-        inst.write("INST:NSEL 2")
-        inst.write("VOLT "+text)
+        # inst.write(f"OUTPut {channel}")
+        inst.write(f"INST:NSEL {channel}")
+        inst.write(f"VOLT {text}")
         updateMeasurements()
 
-def submitChannel1C(text):
+def submitChannelC(text, channel: int):
     if checkV(text):
-        #inst.write("OUTPut 1")
-        inst.write("INST:NSEL 1")
-        inst.write("CURRENT "+text)
+        # inst.write(f"OUTPut {channel}")
+        inst.write(f"INST:NSEL {channel}")
+        inst.write(f"CURRENT {text}")
         updateMeasurements()
-
-
-def submitChannel2C(text):
-    if checkV(text):
-        #inst.write("OUTPut 1")
-        inst.write("INST:NSEL 2")
-        inst.write("CURRENT "+text)
-        updateMeasurements()
-        
 
 def enableToggle(event):
     outputOn=isOutput()
@@ -130,24 +117,32 @@ def enableToggle(event):
 
 
 
-fig = plt.figure(figsize=(4,2))
+fig = plt.figure(figsize=(5.5,2))
 fig.canvas.manager.set_window_title('Keithley 22x0-30-1 Control')
         
-axboxCH1V = plt.axes([0.2, 0.23, 0.38, 0.1])
+axboxCH1V = plt.axes([0.37, 0.23, 0.15, 0.1])
 text_boxCH1V = TextBox(axboxCH1V, 'Voltage', initial=initialSettings[0][0])
-text_boxCH1V.on_submit(submitChannel1V)
+text_boxCH1V.on_submit(lambda text: submitChannelV(text, 1))
 
-axboxCH2V = plt.axes([0.6, 0.23, 0.38, 0.1])
+axboxCH2V = plt.axes([0.59, 0.23, 0.15, 0.1])
 text_boxCH2V = TextBox(axboxCH2V, '', initial=initialSettings[0][1])
-text_boxCH2V.on_submit(submitChannel2V)
+text_boxCH2V.on_submit(lambda text: submitChannelV(text, 2))
 
-axboxCH1C = plt.axes([0.2, 0.12, 0.38, 0.1])
+axboxCH3V = plt.axes([0.82, 0.23, 0.15, 0.1])
+text_boxCH3V = TextBox(axboxCH3V, '', initial=initialSettings[0][2])
+text_boxCH3V.on_submit(lambda text: submitChannelV(text, 3))
+
+axboxCH1C = plt.axes([0.37, 0.12, 0.15, 0.1])
 text_boxCH1C = TextBox(axboxCH1C, 'Current', initial=initialSettings[1][0])
-text_boxCH1C.on_submit(submitChannel1C)
+text_boxCH1C.on_submit(lambda text: submitChannelC(text, 1))
 
-axboxCH2C = plt.axes([0.6, 0.12, 0.38, 0.1])
+axboxCH2C = plt.axes([0.59, 0.12, 0.15, 0.1])
 text_boxCH2C = TextBox(axboxCH2C, '', initial=initialSettings[1][1])
-text_boxCH2C.on_submit(submitChannel2C)
+text_boxCH2C.on_submit(lambda text: submitChannelC(text, 2))
+
+axboxCH3C = plt.axes([0.82, 0.12, 0.15, 0.1])
+text_boxCH3C = TextBox(axboxCH3C, '', initial=initialSettings[1][2])
+text_boxCH3C.on_submit(lambda text: submitChannelC(text, 3))
 
 initialState = isOutput()
 initialString = "Output disabled"
@@ -156,36 +151,43 @@ if initialState:
 
 
 
-axboxEnable = plt.axes([0.31, 0.01, 0.38, 0.1])
+axboxEnable = plt.axes([0.4, 0.01, 0.38, 0.1])
 bEnable=Button(axboxEnable, initialString)
 bEnable.on_clicked(enableToggle)
 
 
-axboxMeasure = plt.axes([0.31, 0.9, 0.38, 0.1])
+axboxMeasure = plt.axes([0.4, 0.9, 0.38, 0.1])
 bMeasure=Button(axboxMeasure, "Measure")
 bMeasure.on_clicked(updateMeasurements)
 
 
 initialMeasures = getMeasurements()
 
-V1 = plt.text(0.1, -3.5, initialMeasures[0][0].ljust(5, '0')+"\n"+initialMeasures[1][0].ljust(5, '0'), ha="center", size=12,
-              bbox=dict(boxstyle="round",
+V1 = plt.text(0.1, -3.5, f"{initialMeasures[0][0]:.4f}\n{initialMeasures[1][0]:.4f}", ha="center", size=12,
+              bbox=dict(boxstyle="square",
                    ec=(1., 0.5, 0.5),
                    fc=(1., 0.8, 0.8),
                    ))
-V2 = plt.text( 0.9, -3.5, initialMeasures[0][1].ljust(5, '0')+"\n"+initialMeasures[1][1].ljust(5, '0'), ha="center", size=12,
-              bbox=dict(boxstyle="round",
+V2 = plt.text( 0.7, -3.5, f"{initialMeasures[0][1]:.4f}\n{initialMeasures[1][1]:.4f}", ha="center", size=12,
+              bbox=dict(boxstyle="square",
+                   ec=(1., 0.5, 0.5),
+                   fc=(1., 0.8, 0.8),
+                   ))
+V3 = plt.text( 1.3, -3.5, f"{initialMeasures[0][2]:.4f}\n{initialMeasures[1][2]:.4f}", ha="center", size=12,
+              bbox=dict(boxstyle="square",
                    ec=(1., 0.5, 0.5),
                    fc=(1., 0.8, 0.8),
                    ))
 plt.text( -0.55, -3.5, "Voltage\nCurrent", ha="center", size=12)
 
 plt.text(0.1,-1.5, "Channel 1", ha="center", size=12)
-plt.text(0.9,-1.5, "Channel 2", ha="center", size=12)
+plt.text(0.7,-1.5, "Channel 2", ha="center", size=12)
+plt.text(1.3,-1.5, "Channel 3", ha="center", size=12)
 
 
-plt.text(0,-5.6, "Channel 1", ha="center", size=12)
-plt.text(1.05,-5.6, "Channel 2", ha="center", size=12)
+plt.text(0.1,-5.6, "Channel 1", ha="center", size=12)
+plt.text(0.7,-5.6, "Channel 2", ha="center", size=12)
+plt.text(1.3,-5.6, "Channel 3", ha="center", size=12)
 
 plt.show()
     

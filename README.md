@@ -20,7 +20,7 @@ Information on the SCPI interface for the Keithley 2200 series devices can be fo
 
 Install the python-usbtmc package:
 
-    pip install python-usbtmc
+    pip install python-usbtmc pyusb
 
 You will likely need to edit **/etc/udev/rules.d/99-garmin.rules** as root, adding this line:
 
